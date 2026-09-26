@@ -5,9 +5,10 @@ import { useHibaChat } from "../hooks/useHibaChat";
 import "../styles/HibaChat.css";
 
 const generalQuestions = [
-  "Where has Hiba travelled?",
-  "What food does Hiba like?",
-  "Who are Hiba's parents?",
+  "Show me available 3BHK properties.",
+  "Which properties are under ₹1 crore?",
+  "What locations are available?",
+  "Show me ready-to-move properties.",
 ];
 
 function HibaChat() {
@@ -36,9 +37,9 @@ function HibaChat() {
             <div className="header-avatar">H</div>
 
             <div>
-              <h1>Hiba AI Assistant</h1>
+              <h1>Property AI Assistant</h1>
 
-              <p>Your personal AI assistant for Hiba</p>
+              <p>Your AI assistant for finding the right property</p>
             </div>
           </div>
 
@@ -62,11 +63,11 @@ function HibaChat() {
 
               {/* Main Heading */}
 
-              <h2>Ask me about Hiba</h2>
+              <h2>Find your ideal property</h2>
 
               <p>
-                I can answer questions about Hiba's family, preferences,
-                activities and travels.
+                I can help you explore properties, locations, prices, amenities
+                and availability.
               </p>
 
               {/* ============================= */}
@@ -175,7 +176,7 @@ function HibaChat() {
           <div className="input-container">
             <input
               value={question}
-              placeholder="Ask something about Hiba..."
+              placeholder="Ask about properties, locations, prices..."
               onChange={(event) => handleQuestionChange(event.target.value)}
               onKeyDown={handleKeyDown}
             />
