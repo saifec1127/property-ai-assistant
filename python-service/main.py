@@ -1,4 +1,11 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
+from db.mongodb import (
+    create_mongo_client,
+    MONGODB_DB_NAME
+)
 
 from models import (
     PropertyIntakeRequest,
@@ -23,16 +30,52 @@ from services.flat_service import (
     get_flat_next_question
 )
 
+from services.session_service import (
+    get_session_preferences,
+    save_session_preferences
+)
 
-app = FastAPI()
+from services.property_service import (
+    find_matching_properties
+)
 
 
 # -----------------------------------
-# Temporary Session Store
-#
-# Production me later MongoDB / Redis use karenge.
+# FastAPI Lifespan
+# MongoDB connection startup/shutdown
 # -----------------------------------
-sessions = {}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    mongo_client = create_mongo_client()
+
+    database = mongo_client[MONGODB_DB_NAME]
+
+    # MongoDB connection test
+    await database.command("ping")
+
+    # Save DB references in FastAPI app
+    app.state.mongo_client = mongo_client
+    app.state.database = database
+
+    print("MongoDB Atlas connected")
+
+    yield
+
+    # Application shutdown
+    await mongo_client.close()
+
+    print("MongoDB connection closed")
+
+
+# -----------------------------------
+# Create FastAPI Application
+# IMPORTANT:
+# Routes must come AFTER this
+# -----------------------------------
+app = FastAPI(
+    lifespan=lifespan
+)
 
 
 # -----------------------------------
@@ -48,24 +91,49 @@ def health():
 
 
 # -----------------------------------
+# Get Property Recommendations
+# -----------------------------------
+@app.get("/recommendations/{session_id}")
+async def get_recommendations(session_id: str):
+
+    database = app.state.database
+
+    preferences = await get_session_preferences(
+        database,
+        session_id
+    )
+
+    properties = await find_matching_properties(
+        database,
+        preferences
+    )
+
+    top_properties = properties[:5]
+
+    return {
+        "session_id": session_id,
+        "preferences": preferences,
+        "total_matches": len(properties),
+        "recommendations": top_properties
+    }
+
+
+# -----------------------------------
 # Property Intake API
 # -----------------------------------
 @app.post("/intake")
-def intake(request: PropertyIntakeRequest):
+async def intake(request: PropertyIntakeRequest):
 
-    # JavaScript:
-    # request.message.toLowerCase()
-    #
-    # Python:
     message = request.message.lower()
 
+    database = app.state.database
+
     # -----------------------------------
-    # Get existing session
-    # or create new preferences
+    # Get existing preferences from MongoDB
     # -----------------------------------
-    preferences = sessions.get(
-        request.session_id,
-        PropertyPreferences()
+    preferences = await get_session_preferences(
+        database,
+        request.session_id
     )
 
     # -----------------------------------
@@ -78,7 +146,7 @@ def intake(request: PropertyIntakeRequest):
         preferences.property_type = "flat"
 
     # -----------------------------------
-    # Common Location Detection
+    # Location Detection
     # -----------------------------------
     city, area = extract_city_and_area(message)
 
@@ -125,7 +193,7 @@ def intake(request: PropertyIntakeRequest):
         )
 
     # -----------------------------------
-    # Common Missing Fields
+    # Missing Fields
     # -----------------------------------
     missing_fields = []
 
@@ -142,7 +210,7 @@ def intake(request: PropertyIntakeRequest):
         missing_fields.append("budget")
 
     # -----------------------------------
-    # Property-specific Missing Fields
+    # Property-specific missing fields
     # -----------------------------------
     if preferences.property_type == "land":
 
@@ -169,8 +237,6 @@ def intake(request: PropertyIntakeRequest):
     # -----------------------------------
     next_question = None
 
-    # First priority:
-    # property type missing
     if preferences.property_type is None:
 
         next_question = (
@@ -178,22 +244,18 @@ def intake(request: PropertyIntakeRequest):
             "and which city and preferred area are you interested in?"
         )
 
-    # Second priority:
-    # location incomplete
     elif preferences.city is None or preferences.area is None:
 
         next_question = (
             "Which city and preferred area are you interested in?"
         )
 
-    # Land-specific question
     elif preferences.property_type == "land":
 
         next_question = get_land_next_question(
             missing_fields
         )
 
-    # Flat-specific question
     elif preferences.property_type == "flat":
 
         next_question = get_flat_next_question(
@@ -201,20 +263,21 @@ def intake(request: PropertyIntakeRequest):
         )
 
     # -----------------------------------
-    # Check if enough data exists
+    # Recommendation readiness
     # -----------------------------------
     ready_for_recommendation = (
         len(missing_fields) == 0
     )
 
     # -----------------------------------
-    # Save current session
+    # Save preferences in MongoDB
     # -----------------------------------
-    sessions[request.session_id] = preferences
+    await save_session_preferences(
+        database,
+        request.session_id,
+        preferences
+    )
 
-    # -----------------------------------
-    # Send API response
-    # -----------------------------------
     return {
         "session_id": request.session_id,
         "message": request.message,

@@ -104,3 +104,68 @@ def get_flat_next_question(
         )
 
     return None
+
+
+# -----------------------------------
+# Calculate Flat Match Score
+# -----------------------------------
+def calculate_flat_score(
+    property_item: dict,
+    preferences: PropertyPreferences
+):
+    score = 0
+
+    # Area = 30 points
+    if (
+        preferences.area is not None
+        and property_item.get("area") == preferences.area
+    ):
+        score += 30
+
+    # Budget = maximum 30 points
+    price = property_item.get("price")
+
+    if (
+        price is not None
+        and preferences.budget_max is not None
+    ):
+
+        if price <= preferences.budget_max:
+            score += 30
+
+        else:
+            difference = price - preferences.budget_max
+
+            percentage_over = (
+                difference / preferences.budget_max
+            ) * 100
+
+            if percentage_over <= 5:
+                score += 20
+
+            elif percentage_over <= 10:
+                score += 10
+
+    # BHK = 25 points
+    if (
+        preferences.bhk is not None
+        and property_item.get("bhk") == preferences.bhk
+    ):
+        score += 25
+
+    # Furnishing = 10 points
+    if (
+        preferences.furnishing is not None
+        and property_item.get("furnishing")
+        == preferences.furnishing
+    ):
+        score += 10
+
+    # Parking = 5 points
+    if (
+        preferences.parking_required is True
+        and property_item.get("parking_available") is True
+    ):
+        score += 5
+
+    return score
