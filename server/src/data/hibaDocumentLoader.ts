@@ -3,12 +3,12 @@ import path from "path";
 
 import { Document } from "@langchain/core/documents";
 
-import { hibaDataFiles } from "./hibaDataFiles";
+import { domainDataFiles } from "./domainDataFiles";
 
 export async function loadHibaDocuments() {
   const documents: Document[] = [];
 
-  for (const dataFile of hibaDataFiles) {
+  for (const dataFile of domainDataFiles) {
     const filePath = path.resolve(
       process.cwd(),
       "../data",
