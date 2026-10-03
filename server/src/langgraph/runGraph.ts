@@ -6,48 +6,44 @@ export async function runApplicationGraph(
 ): Promise<string> {
   const result = await applicationGraph.invoke(
     {
-      // -----------------------------------
-      // Common User Input
-      // -----------------------------------
+      // =================================
+      // COMMON INPUT
+      // =================================
       input,
       sessionId,
 
-      // -----------------------------------
-      // Chat History
-      // -----------------------------------
+      // =================================
+      // CHAT HISTORY
+      // =================================
       messages: [],
       historyText: "",
 
-      // -----------------------------------
-      // Processed / Rewritten Input
-      // -----------------------------------
+      // =================================
+      // PROCESSED INPUT
+      // =================================
       processedInput: "",
 
-      // -----------------------------------
-      // Property Workflow State
-      // -----------------------------------
+      // =================================
+      // PROPERTY WORKFLOW STATE
+      // =================================
+      //
+      // Intent intentionally yahan set
+      // nahi kar rahe.
+      //
+      // detectIntentNode decide karega.
+      // =================================
 
-      // Initially hume nahi pata query
-      // property hai ya general.
-      // detectIntentNode baad me isko update karega.
-      intent: "general",
-
-      // Initially recommendation ke liye
-      // information complete nahi maante.
       propertyReady: false,
 
-      // Python service agar follow-up question
-      // bhejegi to yahan store hoga.
       propertyNextQuestion: "",
 
-      // Python recommendation service se
-      // properties yahan store hongi.
       propertyRecommendations: [],
 
-      // -----------------------------------
-      // Existing RAG State
-      // -----------------------------------
+      // =================================
+      // RAG STATE
+      // =================================
       documents: [],
+
       context: "",
 
       isContextRelevant: false,
@@ -56,9 +52,9 @@ export async function runApplicationGraph(
 
       isQueryImproved: false,
 
-      // -----------------------------------
-      // Final Response
-      // -----------------------------------
+      // =================================
+      // FINAL RESPONSE STATE
+      // =================================
       output: "",
 
       isResponseValid: false,
@@ -67,8 +63,8 @@ export async function runApplicationGraph(
     },
     {
       configurable: {
-        // Same conversation/session ko
-        // LangGraph checkpointer identify karega.
+        // Same session/thread ki state
+        // MongoDB checkpointer me persist hogi.
         thread_id: sessionId,
       },
     },
