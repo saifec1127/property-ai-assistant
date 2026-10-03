@@ -5,10 +5,7 @@ import {
   getPropertyRecommendations,
 } from "../propertyServiceClient";
 
-import {
-  propertyRecommendationChain,
-} from "../prompts/propertyRecommendationPrompt";
-
+import { propertyRecommendationChain } from "../prompts/propertyRecommendationPrompt";
 
 // -----------------------------------
 // Property Intake Node
@@ -16,24 +13,15 @@ import {
 // User message Python FastAPI ko bhejta hai.
 // Python preferences extract karta hai.
 // -----------------------------------
-export async function propertyIntakeNode(
-  state: GraphStateType,
-) {
-  const result =
-    await processPropertyIntake(
-      state.sessionId,
-      state.input,
-    );
+export async function propertyIntakeNode(state: GraphStateType) {
+  const result = await processPropertyIntake(state.sessionId, state.input);
 
   return {
-    propertyReady:
-      result.ready_for_recommendation,
+    propertyReady: result.ready_for_recommendation,
 
-    propertyNextQuestion:
-      result.next_question ?? "",
+    propertyNextQuestion: result.next_question ?? "",
   };
 }
-
 
 // -----------------------------------
 // Property Follow-Up Node
@@ -42,14 +30,11 @@ export async function propertyIntakeNode(
 // incomplete hai, uska next question
 // final output bana dete hain.
 // -----------------------------------
-export async function propertyFollowUpNode(
-  state: GraphStateType,
-) {
+export async function propertyFollowUpNode(state: GraphStateType) {
   return {
     output: state.propertyNextQuestion,
   };
 }
-
 
 // -----------------------------------
 // Get Property Recommendations Node
@@ -58,17 +43,11 @@ export async function propertyFollowUpNode(
 // fetch karta hai aur GraphState me
 // propertyRecommendations set karta hai.
 // -----------------------------------
-export async function propertyRecommendationsNode(
-  state: GraphStateType,
-) {
-  const result =
-    await getPropertyRecommendations(
-      state.sessionId,
-    );
+export async function propertyRecommendationsNode(state: GraphStateType) {
+  const result = await getPropertyRecommendations(state.sessionId);
 
   return {
-    propertyRecommendations:
-      result.recommendations ?? [],
+    propertyRecommendations: result.recommendations ?? [],
   };
 }
 
@@ -82,9 +61,7 @@ export async function propertyRecommendationsNode(
 // ranked property data ko user-friendly
 // answer me convert karega.
 // -----------------------------------
-export async function generatePropertyResponseNode(
-  state: GraphStateType,
-) {
+export async function generatePropertyResponseNode(state: GraphStateType) {
   // -----------------------------------
   // No recommendations case
   // -----------------------------------
@@ -101,23 +78,18 @@ export async function generatePropertyResponseNode(
   // -----------------------------------
   // Generate final natural response
   // -----------------------------------
-  const output =
-    await propertyRecommendationChain.invoke({
-      question: state.input,
+  const output = await propertyRecommendationChain.invoke({
+    question: state.input,
 
-      // Abhi preferences Python session me hain,
-      // but GraphState me directly store nahi kar rahe.
-      // Recommendations me enough structured
-      // information available hai.
-      preferences:
-        "Use the user's current property requirements from the conversation.",
+    // Abhi preferences Python session me hain,
+    // but GraphState me directly store nahi kar rahe.
+    // Recommendations me enough structured
+    // information available hai.
+    preferences:
+      "Use the user's current property requirements from the conversation.",
 
-      recommendations: JSON.stringify(
-        state.propertyRecommendations,
-        null,
-        2,
-      ),
-    });
+    recommendations: JSON.stringify(state.propertyRecommendations, null, 2),
+  });
 
   return {
     output: output.trim(),
