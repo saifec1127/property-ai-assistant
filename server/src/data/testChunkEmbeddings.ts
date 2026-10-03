@@ -1,32 +1,49 @@
 import "dotenv/config";
 
 import { embeddings } from "../langchain/embeddings";
-import { splitHibaDocuments } from "./hibaTextSplitter";
+
+import { splitDomainDocuments } from "./domainTextSplitter";
 
 async function run() {
-  const chunks = await splitHibaDocuments();
+  // ======================================
+  // CREATE CHUNKS
+  // ======================================
+  const chunks = await splitDomainDocuments();
 
   console.log("Total chunks:", chunks.length);
 
-  const chunkTexts = chunks.map((chunk) => {
-    return chunk.pageContent;
-  });
+  // ======================================
+  // GET TEXT FROM CHUNKS
+  // ======================================
+  const chunkTexts = chunks.map((chunk) => chunk.pageContent);
 
-const vectors = await embeddings.embedDocuments(chunkTexts);
+  // ======================================
+  // CREATE EMBEDDINGS
+  // ======================================
+  const vectors = await embeddings.embedDocuments(chunkTexts);
 
-console.log("Total vectors:", vectors.length);
+  console.log("Total vectors:", vectors.length);
 
-const firstVector = vectors[0];
+  // ======================================
+  // CHECK FIRST VECTOR
+  // ======================================
+  const firstVector = vectors[0];
 
-if (!firstVector) {
-  throw new Error("No embedding vector was generated.");
+  if (!firstVector) {
+    throw new Error("No embedding vector was generated.");
+  }
+
+  console.log("First vector length:");
+
+  console.log(firstVector.length);
+
+  console.log("First few vector values:");
+
+  console.log(firstVector.slice(0, 10));
 }
 
-console.log("First vector length:");
-console.log(firstVector.length);
+run().catch((error) => {
+  console.error("Embedding test failed:", error);
 
-console.log("First few vector values:");
-console.log(firstVector.slice(0, 10));
-}
-
-run();
+  process.exit(1);
+});

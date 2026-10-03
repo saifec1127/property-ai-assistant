@@ -1,13 +1,22 @@
-import { PromptTemplate } from "@langchain/core/prompts";
-import { StringOutputParser } from "@langchain/core/output_parsers";
-import { RunnableSequence } from "@langchain/core/runnables";
+import {
+  PromptTemplate,
+} from "@langchain/core/prompts";
+
+import {
+  StringOutputParser,
+} from "@langchain/core/output_parsers";
+
+import {
+  RunnableSequence,
+} from "@langchain/core/runnables";
 
 import { model } from "./model";
 
-const rewritePrompt = new PromptTemplate({
-  template: `
-You are helping rewrite user questions into clear standalone questions
-for semantic retrieval.
+
+const rewritePrompt =
+  new PromptTemplate({
+    template: `
+You rewrite property-related follow-up questions into clear standalone questions for semantic retrieval.
 
 Previous conversation:
 {chatHistory}
@@ -15,76 +24,105 @@ Previous conversation:
 Current question:
 {question}
 
-Rewrite the current question as a standalone question.
-
 Rules:
 
-- Resolve words like "she", "her", "it", "that", or "they"
-  using the previous conversation.
+1. Resolve references such as:
+   - it
+   - that area
+   - this property
+   - there
+   - that flat
+   - that plot
+   using the previous conversation.
 
-- Do not answer the question.
+2. Preserve property requirements such as:
+   - city
+   - locality
+   - budget
+   - BHK
+   - property type
+   - furnishing
+   - parking
+   - plot size
+   - legal/property topic
 
-- Only rewrite the question.
+3. Do not answer the question.
 
-- If the question is already clear and standalone,
-  preserve its meaning.
+4. Only rewrite the question.
 
-Family relationship normalization:
-
-- phuphu / phuphi / fufi / phoophi
-  means paternal aunt / father's sister
-
-- phuphus / phuphis / fufis
-  means paternal aunts / father's sisters
-
-IMPORTANT:
-
-If the user uses a plural relationship word such as:
-"phuphus", "aunts", "names", "brothers", "sisters",
-preserve the plural meaning.
-
-Do not convert a plural request into a singular question.
+5. If the question is already clear and standalone, preserve its meaning.
 
 Examples:
 
-Question:
-hiba ki phuphu ka naam?
+Previous conversation:
+User: Tell me about Kareli.
+
+Current question:
+What flats are available there?
 
 Standalone question:
-What is the name of Hiba's paternal aunt?
+What flats are available in Kareli, Prayagraj?
 
-Question:
-hibas phuphus name?
 
-Standalone question:
-What are the names of Hiba's paternal aunts?
+Previous conversation:
+User: Tell me about property registration in Uttar Pradesh.
 
-Question:
-tell all phuphus name of hiba
+Current question:
+What documents are needed?
 
 Standalone question:
-What are the names of all of Hiba's paternal aunts?
+What documents are generally needed for property registration in Uttar Pradesh?
+
+
+Previous conversation:
+User: Show me a plot in Naini.
+
+Current question:
+What about its legal checks?
+
+Standalone question:
+What legal checks should be performed before buying a residential plot in Naini, Prayagraj?
 
 Now rewrite the current question.
 
 Standalone question:
 `,
-  inputVariables: ["chatHistory", "question"],
-});
-
-const outputParser = new StringOutputParser();
-
-const rewriteChain = RunnableSequence.from([
-  rewritePrompt,
-  model,
-  outputParser,
-]);
-
-export async function rewriteQuestion(question: string, chatHistory: string) {
-  const rewrittenQuestion = await rewriteChain.invoke({
-    chatHistory: chatHistory.trim() || "No previous conversation.",
-    question,
+    inputVariables: [
+      "chatHistory",
+      "question",
+    ],
   });
 
-  return rewrittenQuestion.trim().replace(/^["']|["']$/g, "");
+
+const outputParser =
+  new StringOutputParser();
+
+
+const rewriteChain =
+  RunnableSequence.from([
+    rewritePrompt,
+    model,
+    outputParser,
+  ]);
+
+
+export async function rewriteQuestion(
+  question: string,
+  chatHistory: string,
+) {
+  const rewrittenQuestion =
+    await rewriteChain.invoke({
+      chatHistory:
+        chatHistory.trim() ||
+        "No previous conversation.",
+
+      question,
+    });
+
+  return rewrittenQuestion
+    .trim()
+    .replace(
+      /^["']|["']$/g,
+      "",
+    );
 }

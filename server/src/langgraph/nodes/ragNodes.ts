@@ -4,7 +4,7 @@ import { rewriteQuestion } from "../../langchain/questionRewriter";
 
 import {
   formatDocumentsAsContext,
-  retrieveHibaDocuments,
+  retrieveDomainDocuments,
 } from "../../langchain/retriever";
 
 import { hibaChain } from "../../langchain/chain";
@@ -41,7 +41,7 @@ export async function retrieveContextNode(
   console.log(state.processedInput);
 
   const documents =
-    await retrieveHibaDocuments(
+    await retrieveDomainDocuments(
       state.processedInput,
       8,
     );

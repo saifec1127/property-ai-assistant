@@ -1,6 +1,6 @@
 import {
   formatDocumentsAsContext,
-  retrieveHibaDocuments,
+  retrieveDomainDocuments,
 } from "./retriever";
 
 import {
@@ -83,7 +83,7 @@ export async function askHiba(
   // ========================================
 
   const documents =
-    await retrieveHibaDocuments(
+    await retrieveDomainDocuments(
       standaloneQuestion,
       4
     );

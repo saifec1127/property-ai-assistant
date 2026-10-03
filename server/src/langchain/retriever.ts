@@ -2,7 +2,22 @@ import type { Document } from "@langchain/core/documents";
 
 import { getPineconeVectorStore } from "./pineconeVectorStore";
 
-export async function retrieveHibaDocuments(
+// ========================================
+// RETRIEVE DOMAIN DOCUMENTS
+// ========================================
+//
+// Pinecone se semantic search karke
+// relevant documents/chunks laata hai.
+//
+// Current domain:
+// property
+//
+// Future:
+// health
+// finance
+// etc.
+// ========================================
+export async function retrieveDomainDocuments(
   question: string,
   k = 4,
 ): Promise<Document[]> {
@@ -13,6 +28,14 @@ export async function retrieveHibaDocuments(
   return documents;
 }
 
+// ========================================
+// FORMAT DOCUMENTS AS LLM CONTEXT
+// ========================================
+//
+// Retrieved documents ko ek readable
+// string me convert karta hai jise LLM
+// context ke form me use karega.
+// ========================================
 export function formatDocumentsAsContext(documents: Document[]): string {
   return documents
     .map(
