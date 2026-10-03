@@ -5,5 +5,5 @@ export const model = new ChatOpenAI({
   //   temperature: 0,
   temperature: 0.2,
   //   temperature: 1,
-  maxTokens: 200,
+  maxTokens: 600,
 });

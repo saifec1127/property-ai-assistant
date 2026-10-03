@@ -34,6 +34,7 @@ import {
   propertyIntakeNode,
   propertyFollowUpNode,
   propertyRecommendationsNode,
+  generatePropertyResponseNode,
 } from "../property/langgraph/propertyNodes";
 
 // ===================================
@@ -124,6 +125,8 @@ const workflow = new StateGraph(GraphState)
 
   .addNode("fetchPropertyRecommendations", propertyRecommendationsNode)
 
+  .addNode("generatePropertyResponse", generatePropertyResponseNode)
+
   // =================================
   // EXISTING GENERAL RAG NODES
   // =================================
@@ -176,7 +179,11 @@ const workflow = new StateGraph(GraphState)
   .addEdge("propertyFollowUp", "saveHistory")
 
   // Information complete
-  .addEdge("fetchPropertyRecommendations", "saveHistory")
+  //.addEdge("fetchPropertyRecommendations", "saveHistory")
+
+  .addEdge("fetchPropertyRecommendations", "generatePropertyResponse")
+
+  .addEdge("generatePropertyResponse", "saveHistory")
 
   // =================================
   // EXISTING GENERAL RAG WORKFLOW

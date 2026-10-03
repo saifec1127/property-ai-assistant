@@ -13,12 +13,39 @@ export async function detectIntentNode(
     "apartment",
     "bhk",
     "house",
+    "furnished",
+    "furnishing",
+    "parking",
+    "budget",
+    "sqft",
+    "square feet",
+    "investment",
   ];
 
-  const isPropertyQuery =
+  // -----------------------------------
+  // Check current message
+  // -----------------------------------
+  const hasPropertyKeyword =
     propertyKeywords.some((keyword) =>
       input.includes(keyword),
     );
+
+  // -----------------------------------
+  // Check previous graph state
+  //
+  // Agar previous session already
+  // property flow me tha, to current
+  // follow-up bhi property maana jayega.
+  // -----------------------------------
+  const wasPropertyConversation =
+    state.intent === "property";
+
+  // -----------------------------------
+  // Final decision
+  // -----------------------------------
+  const isPropertyQuery =
+    hasPropertyKeyword ||
+    wasPropertyConversation;
 
   return {
     intent: isPropertyQuery

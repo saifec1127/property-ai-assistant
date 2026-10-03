@@ -4,8 +4,12 @@ import { runApplicationGraph } from "./langgraph/runGraph";
 import { applicationGraph } from "./langgraph/graph";
 
 async function run() {
-  // Har test ke liye new session id use karo
-  const sessionId = "property-graph-test-1";
+  // -----------------------------------
+  // Same session id use karenge
+  // taaki second message first message
+  // ki conversation continue kare
+  // -----------------------------------
+  const sessionId = `property-graph-test-${Date.now()}`;
 
   // =====================================
   // FIRST PROPERTY MESSAGE
@@ -22,7 +26,7 @@ async function run() {
   console.log(firstOutput);
 
   // =====================================
-  // CHECK GRAPH STATE
+  // CHECK GRAPH STATE AFTER FIRST MESSAGE
   // =====================================
 
   const firstCheckpoint = await applicationGraph.getState({
@@ -35,24 +39,93 @@ async function run() {
 
   console.log({
     input: firstCheckpoint.values.input,
-    sessionId: firstCheckpoint.values.sessionId,
 
-    intent: firstCheckpoint.values.intent,
+    sessionId:
+      firstCheckpoint.values.sessionId,
 
-    propertyReady: firstCheckpoint.values.propertyReady,
+    intent:
+      firstCheckpoint.values.intent,
 
-    propertyNextQuestion: firstCheckpoint.values.propertyNextQuestion,
+    propertyReady:
+      firstCheckpoint.values.propertyReady,
 
-    propertyRecommendations: firstCheckpoint.values.propertyRecommendations,
+    propertyNextQuestion:
+      firstCheckpoint.values.propertyNextQuestion,
 
-    output: firstCheckpoint.values.output,
+    propertyRecommendations:
+      firstCheckpoint.values.propertyRecommendations,
 
-    messages: firstCheckpoint.values.messages,
+    output:
+      firstCheckpoint.values.output,
+
+    messages:
+      firstCheckpoint.values.messages,
+  });
+
+
+  // =====================================
+  // SECOND PROPERTY MESSAGE
+  // =====================================
+
+  console.log("\nSECOND PROPERTY MESSAGE");
+
+  const secondOutput = await runApplicationGraph(
+    "Semi furnished and I need parking",
+    sessionId,
+  );
+
+  console.log("\nSecond Output:");
+  console.log(secondOutput);
+
+
+  // =====================================
+  // CHECK GRAPH STATE AFTER SECOND MESSAGE
+  // =====================================
+
+  const secondCheckpoint = await applicationGraph.getState({
+    configurable: {
+      thread_id: sessionId,
+    },
+  });
+
+  console.log(
+    "\nCHECKPOINT AFTER SECOND MESSAGE:",
+  );
+
+  console.log({
+    input:
+      secondCheckpoint.values.input,
+
+    sessionId:
+      secondCheckpoint.values.sessionId,
+
+    intent:
+      secondCheckpoint.values.intent,
+
+    propertyReady:
+      secondCheckpoint.values.propertyReady,
+
+    propertyNextQuestion:
+      secondCheckpoint.values
+        .propertyNextQuestion,
+
+    propertyRecommendations:
+      secondCheckpoint.values
+        .propertyRecommendations,
+
+    output:
+      secondCheckpoint.values.output,
+
+    messages:
+      secondCheckpoint.values.messages,
   });
 }
 
 run().catch((error) => {
-  console.error("Property graph test failed:", error);
+  console.error(
+    "Property graph test failed:",
+    error,
+  );
 
   process.exit(1);
 });

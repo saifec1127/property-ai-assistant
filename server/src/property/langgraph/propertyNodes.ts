@@ -5,6 +5,10 @@ import {
   getPropertyRecommendations,
 } from "../propertyServiceClient";
 
+import {
+  propertyRecommendationChain,
+} from "../prompts/propertyRecommendationPrompt";
+
 
 // -----------------------------------
 // Property Intake Node
@@ -50,14 +54,9 @@ export async function propertyFollowUpNode(
 // -----------------------------------
 // Get Property Recommendations Node
 //
-// Jab enough information mil jaye,
-// Python recommendation endpoint call hoga.
-//
-// Abhi testing ke liye simple text output
-// bhi bana rahe hain.
-//
-// Later isi jagah AI-generated natural
-// response add karenge.
+// Python FastAPI se ranked properties
+// fetch karta hai aur GraphState me
+// propertyRecommendations set karta hai.
 // -----------------------------------
 export async function propertyRecommendationsNode(
   state: GraphStateType,
@@ -67,36 +66,60 @@ export async function propertyRecommendationsNode(
       state.sessionId,
     );
 
-  const recommendations =
-    result.recommendations ?? [];
+  return {
+    propertyRecommendations:
+      result.recommendations ?? [],
+  };
+}
 
-  // Agar koi property nahi mili
-  if (recommendations.length === 0) {
+// -----------------------------------
+// Generate Natural AI Response
+//
+// Python ne recommendation calculate
+// kar di hai.
+//
+// Ab existing Node.js LangChain/OpenAI
+// ranked property data ko user-friendly
+// answer me convert karega.
+// -----------------------------------
+export async function generatePropertyResponseNode(
+  state: GraphStateType,
+) {
+  // -----------------------------------
+  // No recommendations case
+  // -----------------------------------
+  if (
+    !state.propertyRecommendations ||
+    state.propertyRecommendations.length === 0
+  ) {
     return {
-      propertyRecommendations: [],
       output:
-        "I could not find any matching properties for your current preferences.",
+        "I could not find a suitable property matching your current preferences.",
     };
   }
 
-  // Top 3 recommendations
-  const topRecommendations =
-    recommendations.slice(0, 3);
+  // -----------------------------------
+  // Generate final natural response
+  // -----------------------------------
+  const output =
+    await propertyRecommendationChain.invoke({
+      question: state.input,
 
-  // Temporary readable response
-  const recommendationText =
-    topRecommendations
-      .map(
-        (property: any, index: number) =>
-          `${index + 1}. ${property.title} - Match Score: ${property.match_score}`,
-      )
-      .join("\n");
+      // Abhi preferences Python session me hain,
+      // but GraphState me directly store nahi kar rahe.
+      // Recommendations me enough structured
+      // information available hai.
+      preferences:
+        "Use the user's current property requirements from the conversation.",
+
+      recommendations: JSON.stringify(
+        state.propertyRecommendations,
+        null,
+        2,
+      ),
+    });
 
   return {
-    propertyRecommendations:
-      recommendations,
-
-    output:
-      `I found ${recommendations.length} matching properties:\n${recommendationText}`,
+    output: output.trim(),
   };
 }
